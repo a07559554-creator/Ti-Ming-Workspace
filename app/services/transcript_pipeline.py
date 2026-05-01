@@ -6,7 +6,10 @@ from urllib.request import Request, urlopen
 import json
 import re
 
-from yt_dlp import YoutubeDL
+try:
+    from yt_dlp import YoutubeDL
+except ImportError:  # pragma: no cover - optional runtime dependency
+    YoutubeDL = None
 
 from ..config import settings
 from ..models import now_iso

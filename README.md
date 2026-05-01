@@ -47,7 +47,7 @@ Use Python 3.11 if possible:
 ```bash
 python3.11 -m venv .venv311
 source .venv311/bin/activate
-pip install fastapi==0.116.1 "uvicorn[standard]==0.35.0" yt-dlp==2026.3.17 faster-whisper
+pip install -r requirements.txt
 ```
 
 Start in real transcript mode:
@@ -63,6 +63,8 @@ Open:
 
 - [http://127.0.0.1:8000/](http://127.0.0.1:8000/)
 - [http://127.0.0.1:8000/docs](http://127.0.0.1:8000/docs)
+
+On the first real transcript run, the Whisper model will be downloaded into `data/models/`.
 
 ## Optional DeepSeek Setup
 
