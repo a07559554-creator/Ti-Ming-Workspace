@@ -4,6 +4,8 @@ Ti-Ming Workspace is a product-focused repository for turning Bilibili videos in
 
 This version is the public GitHub release edition. It only keeps the final product code and the minimum usage documentation needed to run the app locally.
 
+Internal research notes, planning documents, and production process files are intentionally kept out of this repository.
+
 ## What It Does
 
 - Validate Bilibili video links
