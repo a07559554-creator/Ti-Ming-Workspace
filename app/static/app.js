@@ -22,9 +22,13 @@ const groupConfig = {
     { key: "original", label: "原文" },
     { key: "timestamp", label: "时间戳" },
   ],
-  study: [
-    { key: "summary", label: "摘要" },
-    { key: "outline", label: "大纲" },
+  feynman: [
+    { key: "summary", label: "极速掌握模式" },
+    { key: "feynmanDeep", label: "深度学习模式" },
+  ],
+  insights: [
+    { key: "keyPoints", label: "核心知识点" },
+    { key: "outline", label: "结构大纲" },
   ],
   ops: [
     { key: "notes", label: "处理记录" },
@@ -331,6 +335,8 @@ function renderVideoList() {
 function getTabContent(video) {
   const tabMap = {
     summary: video.summary_text || "当前没有摘要内容。",
+    feynmanDeep: video.feynman_deep_text || "当前没有费曼教学内容。",
+    keyPoints: video.key_points_text || "当前没有核心知识点内容。",
     outline: video.outline_text || "当前没有大纲内容。",
     polished: video.polished_transcript || "当前没有 AI 润色版。",
     original: video.original_transcript || "当前没有原始文稿。",

@@ -4,7 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>啼鸣转文稿工作台</title>
-    <link rel="stylesheet" href="/static/styles.css?v=20260501c" />
+    <link rel="stylesheet" href="/static/styles.css?v=20260501d" />
   </head>
   <body>
     <div class="shell">
@@ -62,7 +62,7 @@
               </label>
               <label class="check">
                 <input id="generate-summary" type="checkbox" checked />
-                <span>生成摘要与大纲</span>
+                <span>生成费曼教学与知识点</span>
               </label>
             </div>
 
@@ -101,7 +101,7 @@
             </div>
 
             <div id="detail-empty" class="detail-empty">
-              选择左侧文件后，这里会展示原文、润色稿、时间戳、摘要和大纲。
+              选择左侧文件后，这里会展示视频文案、费曼教学、核心知识点和处理记录。
             </div>
 
             <article id="detail-view" class="detail-view" hidden>
@@ -118,7 +118,8 @@
 
               <nav class="group-row" id="group-tabs">
                 <button class="group-button is-active" data-group="transcript">视频文案</button>
-                <button class="group-button" data-group="study">学习稿</button>
+                <button class="group-button" data-group="feynman">费曼教学</button>
+                <button class="group-button" data-group="insights">核心知识点</button>
                 <button class="group-button" data-group="ops">处理记录</button>
               </nav>
 
@@ -137,6 +138,6 @@
       </main>
     </div>
 
-    <script src="/static/app.js?v=20260501c" defer></script>
+    <script src="/static/app.js?v=20260501d" defer></script>
   </body>
 </html>

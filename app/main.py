@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from pathlib import Path
-from threading import Thread
+from threading import Event, Lock, Thread
 
 from fastapi import FastAPI, HTTPException
 from fastapi.responses import FileResponse
@@ -28,6 +28,12 @@ from .store import store
 app = FastAPI(title=settings.app_name, version="0.1.0")
 static_dir = Path(__file__).parent / "static"
 app.mount("/static", StaticFiles(directory=static_dir), name="static")
+
+ACTIVE_TASK_STATUSES = {"pending", "checking", "downloading", "transcribing"}
+INTERRUPTED_MESSAGE = "服务停止导致任务中断，请重新处理。"
+shutdown_event = Event()
+active_jobs_lock = Lock()
+active_jobs: dict[str, str] = {}
 
 
 def build_task_summary(task) -> TaskSummary:
@@ -60,8 +66,53 @@ def build_video_detail(video) -> VideoDetailResponse:
     return VideoDetailResponse(**payload)
 
 
+def _track_job(task_id: str, video_id: str) -> None:
+    with active_jobs_lock:
+        active_jobs[task_id] = video_id
+
+
+def _untrack_job(task_id: str) -> None:
+    with active_jobs_lock:
+        active_jobs.pop(task_id, None)
+
+
+def _mark_job_interrupted(video_id: str, task_id: str) -> None:
+    task = store.get_task(task_id)
+    if task is not None and task.status in ACTIVE_TASK_STATUSES:
+        store.update_task(
+            task_id,
+            status="failed",
+            progress=100,
+            finished_at=now_iso(),
+            error_message=INTERRUPTED_MESSAGE,
+        )
+
+    video = store.get_video(video_id)
+    if video is not None and video.status in ACTIVE_TASK_STATUSES:
+        notes = list(video.processing_notes)
+        if INTERRUPTED_MESSAGE not in notes:
+            notes.append(INTERRUPTED_MESSAGE)
+        store.update_video(
+            video_id,
+            status="failed",
+            error_message=INTERRUPTED_MESSAGE,
+            processing_notes=notes,
+        )
+
+
+def _mark_all_active_jobs_interrupted() -> None:
+    with active_jobs_lock:
+        job_pairs = list(active_jobs.items())
+    for task_id, video_id in job_pairs:
+        _mark_job_interrupted(video_id=video_id, task_id=task_id)
+
+
 def _run_pipeline_job(video_id: str, task_id: str, generate_polish: bool, generate_summary: bool) -> None:
+    _track_job(task_id=task_id, video_id=video_id)
     try:
+        if shutdown_event.is_set():
+            _mark_job_interrupted(video_id=video_id, task_id=task_id)
+            return
         if settings.pipeline_mode == "real":
             run_real_pipeline(
                 store=store,
@@ -78,11 +129,16 @@ def _run_pipeline_job(video_id: str, task_id: str, generate_polish: bool, genera
                 generate_polish=generate_polish,
                 generate_summary=generate_summary,
             )
-    except Exception as exc:
+    except BaseException as exc:
+        if shutdown_event.is_set():
+            _mark_job_interrupted(video_id=video_id, task_id=task_id)
+            return
         if store.get_video(video_id) is not None:
             store.update_video(video_id, status="failed", error_message=str(exc))
         if store.get_task(task_id) is not None:
             store.update_task(task_id, status="failed", progress=100, finished_at=now_iso(), error_message=str(exc))
+    finally:
+        _untrack_job(task_id)
 
 
 def _start_pipeline_job(video_id: str, task_id: str, generate_polish: bool, generate_summary: bool) -> None:
@@ -97,6 +153,17 @@ def _start_pipeline_job(video_id: str, task_id: str, generate_polish: bool, gene
         daemon=True,
     )
     worker.start()
+
+
+@app.on_event("startup")
+def on_startup() -> None:
+    shutdown_event.clear()
+
+
+@app.on_event("shutdown")
+def on_shutdown() -> None:
+    shutdown_event.set()
+    _mark_all_active_jobs_interrupted()
 
 
 @app.get("/health")

@@ -30,6 +30,8 @@ class VideoRecord:
     polished_transcript: str = ""
     transcript_with_timestamp: str = ""
     summary_text: str = ""
+    feynman_deep_text: str = ""
+    key_points_text: str = ""
     outline_text: str = ""
     tags: list[str] = field(default_factory=list)
     processing_notes: list[str] = field(default_factory=list)
